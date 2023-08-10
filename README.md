@@ -1,0 +1,1 @@
+# awesome-rancher-cluster-manager-installer
