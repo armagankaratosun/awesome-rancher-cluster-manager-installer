@@ -1,0 +1,56 @@
+- name: helm => add repositories
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm repo add rancher-charts https://charts.rancher.io
+
+- name: helm => deploy rancher-backup-crds
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm install rancher-backup-crd rancher-charts/rancher-backup-crd -n cattle-resources-system --create-namespace --version {{ backup.chart_version }}
+
+- name: helm => deploy rancher-backup
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm install rancher-backup rancher-charts/rancher-backup -n cattle-resources-system --create-namespace --version {{ backup.chart_version }}
+
+- name: create =>  the 'rancher-restore' directory
+  file:
+    path: /root/rancher-restore
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+
+- name: copy => s3-secrets.yaml
+  template: 
+    src: s3-secrets.yaml.j2
+    dest: /root/rancher-restore/s3-secrets.yaml
+    owner: root 
+    group: root 
+    mode: 644 
+    force: yes
+
+- name: copy => restore-migration.yaml
+  template: 
+    src: restore-migration.yaml.j2
+    dest: /root/rancher-restore/restore-migration.yaml
+    owner: root 
+    group: root 
+    mode: 644 
+    force: yes
+
+- name: kubectl => create s3-creds
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/kubectl apply -f /root/rancher-restore/s3-secrets.yaml
+
+- name: kubectl => restore backup 
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/kubectl apply -f /root/rancher-restore/restore-migration.yaml
+
+- name: Run kubectl get restore
+  shell: KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/kubectl get restore -o custom-columns=STATUS:.status
+  register: kubectl_output
+  retries: 50  # Adjust the number of retries as needed
+  delay: 10    # Adjust the delay between retries as needed
+  until: "'Completed' in kubectl_output.stdout"
+
+- name: Debug kubectl output
+  debug:
+    var: kubectl_output.stdout_lines

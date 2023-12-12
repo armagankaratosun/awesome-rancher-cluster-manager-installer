@@ -1,0 +1,38 @@
+- name: download => kubectl
+  get_url: 
+    url: https://dl.k8s.io/release/v1.26.2/bin/linux/amd64/kubectl
+    dest: /usr/local/bin/kubectl
+    mode: "+rx"
+  become: true 
+  become_user: root
+
+- name: install => helm3
+  shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+  become: true 
+  become_user: root
+  ignore_errors: true
+
+- name: install => helm3
+  shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+  become: true 
+  become_user: root
+  ignore_errors: true
+
+- name: k3s => create cluster-token
+  copy:
+    dest: "/root/k3s-server-token"
+    content: |
+       {{ clusterToken }}
+
+- name: deploy => k3s
+  shell: curl -sfL https://get.k3s.io |  K3S_TOKEN_FILE=/root/k3s-server-token  INSTALL_K3S_VERSION=v1.24.9+k3s1 sh -s - server --cluster-init
+
+- name: kubernetes => health-check
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/kubectl get nodes
+  register: k8s_health 
+  until: "'The connection' not in k8s_health"
+  retries: 18
+  delay: 10
+
+

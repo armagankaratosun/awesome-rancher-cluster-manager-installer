@@ -1,0 +1,20 @@
+## Rancher Cluster Manager Variables
+# If you are restoring a previous rancher installation from backup, set backup.restore: true
+rancher_hostname: rancher.example.com # set your rancher fqdn
+enable_letsencrypt: true              # enable let's encrypt ssl certificates with cert-manager
+email: admin@example.com              # email for let's encrypt
+bootstrapPassword:                    # admin password for rancher cluster manager 
+clusterToken:                         # Cluster join token for k3s nodes
+## Backup Restore
+backup: 
+  restore: false                      # restore from available backup taken with rancher backup operator, false by default
+  chart_version: 102.0.1+up3.1.1      # backup chart version
+  filename:                           # backup filename
+s3:
+  credentialSecretName:               # s3 credentials k8s secret name
+  credentialSecretNamespace:          # s3 credentials namespace
+  bucketName:                         # bucket name that stores the backup file
+  accessKey:                          # s3 access key, base64 encoded
+  secretKey:                          # s3 access key, base64 encoded
+  endpoint:                           # s3 endpoint e.g, s3.example.com:8080
+  insecureTLSSkipVerify: true         # ignore self-signed certificates

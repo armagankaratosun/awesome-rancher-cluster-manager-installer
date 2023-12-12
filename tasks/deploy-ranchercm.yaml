@@ -1,0 +1,54 @@
+- name: helm => add repositories
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm repo add jetstack https://charts.jetstack.io
+
+- name: kubectl => deploy cert-manager crds
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.crds.yaml
+
+- name: helm => repo update 
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm repo update
+      
+- name: helm => deploy cert-manager
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm install cert-manager jetstack/cert-manager   --namespace cert-manager   --create-namespace   --version v1.7.1
+      
+- name: pause => 5 sec. for cert-manager
+  pause:
+    seconds: 5       
+
+- name: kubectl => create cattle-system ns
+  shell: |
+   KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/kubectl create namespace cattle-system
+  when: backup.restore == false
+
+- name: helm => install rancher-ui
+  shell: |
+    KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm install rancher rancher-stable/rancher \
+      --version=2.7.2 \ 
+      --namespace cattle-system \
+      --set hostname={{ rancher_hostname }} \
+      --set replicas=1 \
+      --set bootstrapPassword={{ bootstrapPassword }}
+  ignore_errors: true
+  when: enable_letsencrypt == false
+
+- name: helm => install rancher-ui
+  shell: |
+    KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm install rancher rancher-stable/rancher \
+      --version=2.7.2 \
+      --namespace cattle-system \
+      --set hostname={{ rancher_hostname }} \
+      --set replicas=1 \
+      --set bootstrapPassword={{ bootstrapPassword }} \
+      --set ingress.tls.source=letsEncrypt \
+      --set letsEncrypt.email={{ email }} \
+      --set letsEncrypt.ingress.class=traefik
+  ignore_errors: true
+  when: enable_letsencrypt == true
+
+- name: pause => 25 sec. for rancher-ui
+  pause:
+    seconds: 25   

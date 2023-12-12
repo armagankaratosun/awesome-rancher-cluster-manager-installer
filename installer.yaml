@@ -1,0 +1,37 @@
+- name: deploy => ranchercm
+  hosts: ranchercm-nodes[0]
+  become: true
+  become_user: root
+  become_method: sudo
+  vars_files: variables.yaml
+
+  tasks: 
+
+      - name: deploy => k3s cluster
+        include_tasks: tasks/k3s.yaml
+        
+      - name: restore => rancher cluster manager 
+        include_tasks: tasks/restore-ranchercm.yaml
+        when: backup.restore == true
+        register: backup_restored
+
+      - name: deploy => rancher cluster manager 
+        include_tasks: tasks/deploy-ranchercm.yaml
+        when: backup_restored is succeeded or backup.restore == false
+        register: rancher_deployed
+
+      # Set a fact to pass rancher_deployed to the second block
+      - set_fact:
+          rancher_deployed_fact: "{{ rancher_deployed }}"
+
+- name: enroll => ranchercm nodes
+  hosts: ranchercm-nodes[1:]
+  become: true
+  become_user: root
+  become_method: sudo
+  vars_files: variables.yaml
+
+  tasks: 
+      - name: enrol => other rancher cluster manager nodes
+        include_tasks: tasks/enroll-other-nodes.yaml
+        when: rancher_deployed_fact is defined

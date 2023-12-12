@@ -1,0 +1,7 @@
+- name: create => k3s-server-token
+  copy:
+    dest: /root/k3s-server-token
+    content: "{{clusterToken}}" 
+
+- name: deploy => k3s
+  shell: curl -sfL https://get.k3s.io |  K3S_TOKEN_FILE=/root/k3s-server-token  INSTALL_K3S_VERSION=v1.24.9+k3s1  INSTALL_K3S_EXEC=" agent --server https://{{rancher_hostname}}:6443" sh -s -
