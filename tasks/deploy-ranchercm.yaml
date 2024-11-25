@@ -27,7 +27,7 @@
 - name: helm => install rancher-ui
   shell: |
     KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm install rancher rancher-stable/rancher \
-      --version=2.7.2 \ 
+      --version={{ rancher_version }} \ 
       --namespace cattle-system \
       --set hostname={{ rancher_hostname }} \
       --set replicas=1 \
@@ -38,7 +38,7 @@
 - name: helm => install rancher-ui
   shell: |
     KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm install rancher rancher-stable/rancher \
-      --version=2.7.2 \
+      --version={{ rancher_version }} \
       --namespace cattle-system \
       --set hostname={{ rancher_hostname }} \
       --set replicas=1 \
