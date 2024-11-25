@@ -1,6 +1,8 @@
 ## Rancher Cluster Manager Variables
 # If you are restoring a previous rancher installation from backup, set backup.restore: true
 rancher_hostname: rancher.example.com # set your rancher fqdn
+rancher_version: "2.9.3"              # rancher cluster manager version
+k3s_version: "v1.30.6+k3s1"           # k3s version   
 enable_letsencrypt: true              # enable let's encrypt ssl certificates with cert-manager
 email: admin@example.com              # email for let's encrypt
 bootstrapPassword:                    # admin password for rancher cluster manager 
