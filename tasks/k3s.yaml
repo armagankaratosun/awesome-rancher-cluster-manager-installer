@@ -25,7 +25,7 @@
        {{ clusterToken }}
 
 - name: deploy => k3s
-  shell: curl -sfL https://get.k3s.io |  K3S_TOKEN_FILE=/root/k3s-server-token  INSTALL_K3S_VERSION=v1.24.9+k3s1 sh -s - server --cluster-init
+  shell: curl -sfL https://get.k3s.io |  K3S_TOKEN_FILE=/root/k3s-server-token  INSTALL_K3S_VERSION={{k3s_version}} sh -s - server --cluster-init
 
 - name: kubernetes => health-check
   shell: |
